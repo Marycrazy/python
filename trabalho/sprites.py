@@ -173,8 +173,8 @@ class Cliente():
 servente = Servente()
 Balcao = Balcao(game_canvas)
 timer = Timer(0)
-destino1 = pygame.Rect(453, 23, 100, 110)
-destino2 = pygame.Rect(453, 23, 100, 110)
+destino1 = pygame.Rect(350, 23, 100, 110)
+destino2 = pygame.Rect(360, 23, 100, 110)
 Cliente1 = Cliente(game_canvas, 'croxo.png', destino1)
 Cliente2 = Cliente(game_canvas, 'cazul.png', destino2)
 
@@ -201,7 +201,6 @@ while running:
     Balcao.posicao_mesa()
     # Desenha o servente na tela
     game_canvas.blit(servente.image, servente.rect)
-
     # Desenha o cliente na tela
     if timer.counter >= 2:
         Cliente1.aparicao()
@@ -210,8 +209,20 @@ while running:
             Cliente2.aparicao()
             game_canvas.blit(Cliente2.image, Cliente2.rect)
             if timer.counter >= 6:
-                Cliente2.rect.x = Cliente1.rect.x + Cliente1.largura
+                novo_destino1 = pygame.Rect(325, 23, 100, 110)
+                novo_destino2 = pygame.Rect(380, 25, 100, 110)
+                # Atualiza o destino dos clientes para os novos destinos
+                Cliente1.destino = novo_destino1
+                Cliente2.destino = novo_destino2
+                # Calcula o centro dos novos destinos
+                centro_destino1 = Cliente1.destino.x + Cliente1.destino.width / 2
+                centro_destino2 = Cliente2.destino.x + Cliente2.destino.width / 2
+                # Atualiza a posição x dos clientes para ser o centro do destino menos metade da largura do cliente
+                Cliente1.rect.x = centro_destino1 - Cliente1.largura / 2
+                Cliente2.rect.x = centro_destino2 - Cliente2.largura / 2
+                # Desenha a imagem do Cliente2 na tela
                 game_canvas.blit(Cliente2.image, Cliente2.rect)
+                game_canvas.blit(Cliente1.image, Cliente1.rect)
 
     #desenha o tempo na tela
     game_canvas.blit(timer.text, (750, 50))
@@ -221,14 +232,3 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
-
-
-"""Na linha screen = pygame.display.set_mode(SCREEN_SIZE, pygame.FULLSCREEN), você está passando dois argumentos para a função pygame.display.set_mode().
-
-O primeiro argumento é SCREEN_SIZE, que é uma tupla contendo dois valores: a largura e a altura da tela.
-
-O segundo argumento é pygame.FULLSCREEN, que é uma constante que indica à função para abrir a janela em modo de tela cheia.
-
-Então, embora pareça que você está passando três valores, você está realmente passando dois: uma tupla (que conta como um único argumento) e uma constante.
-
-A função pygame.display.set_mode() pode aceitar um segundo argumento opcional que é usado para definir várias opções de exibição. Neste caso, você está usando para definir a opção de tela cheia."""
