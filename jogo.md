@@ -113,35 +113,25 @@ class Servente():
             self.image=self.parado_image
 
 class Cliente():
-    def __init__(self, game_canvas):
+    def __init__(self, game_canvas,sprite, destino):
         super().__init__()
         # Carregando a imagem do yoshi roxo
-        self.original_roxo_image = pygame.image.load('croxo.png')
-        self.andando_roxo_pe_image = self.original_roxo_image.subsurface((77, 11, 56, 112))
-        self.parado_roxo_pe_image = self.original_roxo_image.subsurface((12, 8, 56, 112))
-        self.parado_roxo_sentado_image = self.original_roxo_image.subsurface((8, 138, 56, 112))
-        self.andando_roxo_esquerda_image = self.original_roxo_image.subsurface((111, 138, 56, 112))
-        #yoshi azul
-        self.original_azul_image = pygame.image.load('cazul.png')
-        self.andando_azul_pe_image = self.original_azul_image.subsurface((77, 11, 56, 112))
-        self.parado_azul_pe_image = self.original_azul_image.subsurface((12, 8, 56, 112))
-        self.parado__azul_sentado_image = self.original_azul_image.subsurface((8, 138, 56, 112))
-        self.andando_azul_esquerda_image = self.original_azul_image.subsurface((111, 138, 56, 112))
+        self.original_image = pygame.image.load(sprite)
+        self.andando_pe_image = self.original_image.subsurface((77, 11, 56, 112))
+        self.parado_pe_image = self.original_image.subsurface((12, 8, 56, 112))
+        self.parado_sentado_image = self.original_image.subsurface((8, 138, 56, 112))
+        self.andando_esquerda_image = self.original_image.subsurface((111, 138, 56, 112))
+
         # Aumentando o tamanho da imagem do cliente
-        nova_largura = self.original_roxo_image.get_width() / 5  # Duplicando a largura
-        nova_altura = self.original_roxo_image.get_height() / 4   # Duplicando a altura
-        self.parado_roxo_pe_image = pygame.transform.scale(self.parado_roxo_pe_image, (nova_largura, nova_altura))
-        self.andando_roxo_pe_image = pygame.transform.scale(self.andando_roxo_pe_image, (nova_largura, nova_altura))
-        self.parado_roxo_sentado_image = pygame.transform.scale(self.parado_roxo_sentado_image, (nova_largura, nova_altura))
-        self.andando_roxo_esquerda_image = pygame.transform.scale(self.andando_roxo_esquerda_image, (nova_largura, nova_altura))
-        #azul
-        self.parado_azul_pe_image = pygame.transform.scale(self.parado_azul_pe_image, (nova_largura, nova_altura))
-        self.andando_azul_pe_image = pygame.transform.scale(self.andando_azul_pe_image, (nova_largura, nova_altura))
-        self.parado__azul_sentado_image = pygame.transform.scale(self.parado__azul_sentado_image, (nova_largura, nova_altura))
-        self.andando_azul_esquerda_image = pygame.transform.scale(self.andando_azul_esquerda_image, (nova_largura, nova_altura))
+        nova_largura = self.original_image.get_width() / 5  # Duplicando a largura
+        nova_altura = self.original_image.get_height() / 4   # Duplicando a altura
+        self.parado_pe_image = pygame.transform.scale(self.parado_pe_image, (nova_largura, nova_altura))
+        self.andando_pe_image = pygame.transform.scale(self.andando_pe_image, (nova_largura, nova_altura))
+        self.parado_sentado_image = pygame.transform.scale(self.parado_sentado_image, (nova_largura, nova_altura))
+        self.andando_esquerda_image = pygame.transform.scale(self.andando_esquerda_image, (nova_largura, nova_altura))
 
         # Define a imagem inicial
-        self.image = self.andando_roxo_pe_image
+        self.image = self.andando_pe_image
 
         # Obtendo o retângulo da imagem
         self.rect = self.image.get_rect()
@@ -150,7 +140,10 @@ class Cliente():
         self.rect.x = 380
         self.rect.y = 0
 
-        self.destino=pygame.Rect(353, 23, 100, 110)
+        # Definindo a largura do cliente
+        self.largura = self.rect.width
+
+        self.destino=destino
 
         # Definindo se o servente está se movendo
         self.is_moving = False
@@ -162,7 +155,7 @@ class Cliente():
             # Define que o sprite está se movendo
             self.is_moving = True
             # Muda a imagem do sprite para a imagem de andar
-            self.image = self.andando_roxo_pe_image
+            self.image = self.andando_pe_image
 
             # Normaliza dy dividindo-o pelo valor absoluto de dy. Isso resulta em um valor de -1 ou 1, indicando a direção do movimento.
             dy /= abs(dy)
@@ -173,14 +166,17 @@ class Cliente():
             # Se o sprite está suficientemente perto do destino, define que o sprite não está se movendo
             self.is_moving = False
             # Muda a imagem do sprite para a imagem de parado
-            self.image = self.parado_roxo_pe_image
+            self.image = self.parado_pe_image
 
 
 # Criando uma instância da classe Servente
 servente = Servente()
 Balcao = Balcao(game_canvas)
 timer = Timer(0)
-Cliente=Cliente(game_canvas)
+destino1 = pygame.Rect(453, 23, 100, 110)
+destino2 = pygame.Rect(453, 23, 100, 110)
+Cliente1 = Cliente(game_canvas, 'croxo.png', destino1)
+Cliente2 = Cliente(game_canvas, 'cazul.png', destino2)
 
 running = True
 while running:
@@ -208,8 +204,15 @@ while running:
 
     # Desenha o cliente na tela
     if timer.counter >= 2:
-        game_canvas.blit(Cliente.image, Cliente.rect)
-        Cliente.aparicao()
+        Cliente1.aparicao()
+        game_canvas.blit(Cliente1.image, Cliente1.rect)
+        if timer.counter >= 4:
+            Cliente2.aparicao()
+            game_canvas.blit(Cliente2.image, Cliente2.rect)
+            if timer.counter >= 6:
+                Cliente2.rect.x = Cliente1.rect.x + Cliente1.largura
+                game_canvas.blit(Cliente2.image, Cliente2.rect)
+
     #desenha o tempo na tela
     game_canvas.blit(timer.text, (750, 50))
     # Redimensiona a superfície de design para a resolução da tela do usuário
