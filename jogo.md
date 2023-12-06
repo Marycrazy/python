@@ -1,11 +1,11 @@
 import pygame
 from pygame.locals import *
-import math
+
 # Inicializando o pygame
 pygame.init()
 
 # Configurando a janela do jogo
-GAME_LOGIC_SIZE, SCREEN_SIZE = (800, 600), (800 , 600 ) # A resolução do jogo
+GAME_LOGIC_SIZE, SCREEN_SIZE = (800, 600), (1280 , 720 ) # A resolução do jogo
 game_canvas = pygame.Surface(GAME_LOGIC_SIZE) # superfície onde o jogo será desenhado
 screen = pygame.display.set_mode(SCREEN_SIZE) # A tela do usuário
 
@@ -53,13 +53,9 @@ class Balcao():
     def posicao_mesa(self):
         # Carregando a imagem da mesa
         mesa_imagem = pygame.image.load('mesa.png')
-        # Definindo o número de mesas que você quer na tela
-        numero_mesas = 5
         # Definindo a largura e altura de cada mesa
         largura_mesa = 180
         altura_mesa = 130
-        # Criando uma lista de mesas
-        mesas = []
         # Desenhando cada mesa na tela
         posicoes = [(self.game_canvas.get_width()- self.game_canvas.get_height()-altura_mesa, Balcao.desenha_passadeira()+20), # Posição da primeira mesa
                 (self.game_canvas.get_width() - largura_mesa - altura_mesa, Balcao.desenha_passadeira()+20), # Posição da última mesa
@@ -147,30 +143,26 @@ class Cliente():
         # Definindo se o servente está se movendo
         self.is_moving = False
     def aparicao(self):
-        # Calcula a diferença nas coordenadas x e y entre o centro do sprite e o centro do destino
-        dx = self.destino.centerx - self.rect.centerx
+        # Calcula a diferença na coordenada y entre o centro do sprite e o centro do destino
         dy = self.destino.centery - self.rect.centery
-
-        # Calcula a distância entre o centro do sprite e o centro do destino usando o teorema de Pitágoras
-        dist = math.hypot(dx, dy)
-
         # Se o sprite não está suficientemente perto do destino (a distância é maior que 2)
-        if dist > 2:
+        if abs(dy) > 2:  # Usamos abs() para obter o valor absoluto de dy, pois ele pode ser negativo
             # Define que o sprite está se movendo
             self.is_moving = True
             # Muda a imagem do sprite para a imagem de andar
             self.image = self.andando_pe_image
-            # Normaliza dx e dy dividindo-os pela distância. Isso resulta em um vetor unitário (um vetor de comprimento 1) na direção do destino.
-            dx /= dist
-            dy /= dist
+
+            # Normaliza dy dividindo-o pelo valor absoluto de dy. Isso resulta em um valor de -1 ou 1, indicando a direção do movimento.
+            dy /= abs(dy)
+
             # Move o sprite na direção do destino. O número 5 é a velocidade do movimento.
-            self.rect.x += dx * 5
             self.rect.y += dy * 5
         else:
             # Se o sprite está suficientemente perto do destino, define que o sprite não está se movendo
             self.is_moving = False
             # Muda a imagem do sprite para a imagem de parado
             self.image = self.parado_pe_image
+
 
 # Criando uma instância da classe Servente
 servente = Servente()
