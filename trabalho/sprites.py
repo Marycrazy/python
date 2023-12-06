@@ -1,15 +1,33 @@
 import pygame
 from pygame.locals import *
-import math
-
 
 # Inicializando o pygame
 pygame.init()
 
 # Configurando a janela do jogo
-GAME_LOGIC_SIZE, SCREEN_SIZE = (800, 600), (1334 , 750 ) # A resolução do jogo
+GAME_LOGIC_SIZE, SCREEN_SIZE = (800, 600), (800 , 600 ) # A resolução do jogo
 game_canvas = pygame.Surface(GAME_LOGIC_SIZE) # superfície onde o jogo será desenhado
-screen = pygame.display.set_mode(SCREEN_SIZE, pygame.FULLSCREEN) # A tela do usuário
+screen = pygame.display.set_mode(SCREEN_SIZE) # A tela do usuário
+
+class Timer():
+    def __init__(self, counter):
+        super().__init__()
+        self.counter = counter
+        # Cria um objeto de fonte para renderizar o texto
+        self.font = pygame.font.SysFont(None, 50)
+        # Define o tempo de atraso para o evento do temporizador
+        self.time_delay = 1000
+        # Cria um evento personalizado de temporizador
+        self.timer_event = pygame.USEREVENT+1
+        # Define o temporizador para disparar o evento após o tempo de atraso
+        pygame.time.set_timer(self.timer_event, self.time_delay)
+        self.text = self.font.render(str(self.counter), True, (0, 128, 0))
+    
+    # Atualiza o contador e recria o texto
+    def update(self):
+        self.counter += 1
+        self.text = self.font.render(str(self.counter), True, (0, 128, 0))
+
 
 class Balcao():
     def __init__(self, design_surface):
@@ -56,9 +74,8 @@ class Balcao():
             self.game_canvas.blit(mesa_redimensionada, pos)
 
 class Servente(pygame.sprite.Sprite):
-    def __init__(self, design_surface):
+    def __init__(self):
         super().__init__()
-        self.screen = design_surface
         # Carregando a imagem do servente parado
         self.original_image = pygame.image.load('servente.png')
         self.andando_image = self.original_image.subsurface((55, 0, 50, 66))
@@ -102,14 +119,16 @@ class Servente(pygame.sprite.Sprite):
 
 
 # Criando uma instância da classe Servente
-servente = Servente(game_canvas)
+servente = Servente()
 Balcao = Balcao(game_canvas)
-
+timer = Timer(0)
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == timer.timer_event:# Se o evento for o evento do temporizador, incrementa o contador e recria o texto
+            timer.update()
         
     # Atualiza a posição do servente
     servente.update()
@@ -126,6 +145,8 @@ while running:
     Balcao.posicao_mesa()
     # Desenha o servente na tela
     game_canvas.blit(servente.image, servente.rect)
+    #desenha o tempo na tela
+    game_canvas.blit(timer.text, (750, 50))
     # Redimensiona a superfície de design para a resolução da tela do usuário
     screen.blit(pygame.transform.scale(game_canvas, SCREEN_SIZE), (0, 0))
     # Atualiza a tela
