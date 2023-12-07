@@ -59,9 +59,7 @@ class Balcao():
         altura_mesa = 130
         # Desenhando cada mesa na tela
         posicoes = [(self.game_canvas.get_width()- self.game_canvas.get_height()-altura_mesa, Balcao.desenha_passadeira()+20), # Posição da primeira mesa
-                (self.game_canvas.get_width() - largura_mesa - altura_mesa, Balcao.desenha_passadeira()+20), # Posição da última mesa
-                (self.game_canvas.get_width()- self.game_canvas.get_height()-altura_mesa, self.game_canvas.get_height() - altura_mesa - self.nova_altura-20), # Posição da mesa mais abaixo
-                (self.game_canvas.get_width() - largura_mesa - altura_mesa, self.game_canvas.get_height() - altura_mesa - self.nova_altura-20)]# Posição da mesa mais abaixo e mais à direita
+                (self.game_canvas.get_width() - largura_mesa - altura_mesa, Balcao.desenha_passadeira()+20)] # Posição da última mesa
         for pos in posicoes:
             # Redimensionando a imagem da mesa para a largura e altura desejadas
             mesa_redimensionada = pygame.transform.scale(mesa_imagem, (largura_mesa, altura_mesa))
@@ -111,7 +109,7 @@ class Servente():
             self.image=self.parado_image
 
 class Cliente():
-    posicoes_livres = [False, True, True, True]
+    posicoes_livres = [True, True]
     def __init__(self, game_canvas,sprite, destino):
         super().__init__()
         # Carregando a imagem do yoshi roxo
@@ -167,26 +165,18 @@ class Cliente():
                 self.ir_mesa()
 
     def ir_mesa(self):
-        #print(f"Posição atual: ({self.rect.x}, {self.rect.y}), Bottom: {self.rect.bottom}, Right: {self.rect.right}")
         if self.move_down:
             self.rect.move_ip(0, 5)
             if(self.rect.bottom >= 260):
                 self.move_down = False
                 self.move_side = True
-            if not self.posicoes_livres[0] and not self.posicoes_livres[1]:
-                self.move_down = True
-                self.rect.move_ip(0, 5)
-                print("hi")
-                if(self.rect.bottom > 500):
-                    print("here")
-                    self.move_down = False
-                    self.move_side = True
 
         if self.posicoes_livres[0]:
             if self.move_side:
                 self.rect.move_ip(5, 0)
+                self.image = pygame.transform.flip(self.andando_esquerda_image, True, False)
                 if(self.rect.right > 650):
-                    self.image = self.parado_sentado_image
+                    self.image
                     self.move_side = False
                     self.posicoes_livres[0] = False
 
@@ -194,7 +184,7 @@ class Cliente():
             if self.move_side:
                 self.rect.move_ip(-5, 0)
                 self.image = self.andando_esquerda_image
-                if(self.rect.right < 190):
+                if(self.rect.right < 210):
                     self.move_side = False
                     self.posicoes_livres[1] = False
             
@@ -205,7 +195,7 @@ class Cliente():
 # Criando uma instância da classe Servente
 servente = Servente()
 Balcao = Balcao(game_canvas)
-timer = Timer(10)
+timer = Timer(60)
 destino1 = pygame.Rect(350, 23, 100, 110)
 destino2 = pygame.Rect(360, 23, 100, 110)
 Cliente1 = Cliente(game_canvas, 'croxo.png', destino1)
@@ -238,9 +228,10 @@ while running:
     if (pygame.time.get_ticks() - start_time) >= 2000:
         Cliente1.aparicao()
         game_canvas.blit(Cliente1.image, Cliente1.rect)
-        if (pygame.time.get_ticks() - start_time) >= 8000:
+        if (pygame.time.get_ticks() - start_time) >= 4000:
             Cliente2.aparicao()
             game_canvas.blit(Cliente2.image, Cliente2.rect)
+    
 
     #desenha o tempo na tela
     game_canvas.blit(timer.text, (750, 50))
