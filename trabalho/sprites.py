@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
-
+import sys
+import time
 # Inicializando o pygame
 pygame.init()
 
@@ -26,8 +27,11 @@ class Timer():
     
     # Atualiza o contador e recria o texto
     def update(self):
-        self.counter -= 1
-        self.text = self.font.render(str(self.counter), True, (0, 128, 0))
+        if self.counter > 0:
+            self.counter -= 1
+            self.text = self.font.render(str(self.counter), True, (0, 128, 0))
+        if self.counter == 0:
+            self.counter = 0
 
 class Balcao():
     def __init__(self, design_surface):
@@ -116,7 +120,6 @@ class Cliente():
         self.original_image = pygame.image.load(sprite)
         self.andando_pe_image = self.original_image.subsurface((77, 11, 56, 112))
         self.parado_pe_image = self.original_image.subsurface((12, 8, 56, 112))
-        self.parado_sentado_image = self.original_image.subsurface((8, 138, 56, 112))
         self.andando_esquerda_image = self.original_image.subsurface((111, 138, 56, 112))
 
         # Aumentando o tamanho da imagem do cliente
@@ -124,9 +127,7 @@ class Cliente():
         nova_altura = self.original_image.get_height() / 4   # Duplicando a altura
         self.parado_pe_image = pygame.transform.scale(self.parado_pe_image, (nova_largura, nova_altura))
         self.andando_pe_image = pygame.transform.scale(self.andando_pe_image, (nova_largura, nova_altura))
-        self.parado_sentado_image = pygame.transform.scale(self.parado_sentado_image, (nova_largura, nova_altura))
         self.andando_esquerda_image = pygame.transform.scale(self.andando_esquerda_image, (nova_largura, nova_altura))
-
         # Define a imagem inicial
         self.image = self.andando_pe_image
 
@@ -153,8 +154,6 @@ class Cliente():
     def aparicao(self):
         dy = self.destino.centery - self.rect.centery
         if abs(dy) > 2 and self.is_moving:
-            print("ESTOU PRESO")
-        
             self.image = self.andando_pe_image
             dy /= abs(dy)
             self.rect.y += dy * 5
@@ -165,42 +164,68 @@ class Cliente():
                 self.ir_mesa()
 
     def ir_mesa(self):
-        if self.move_down:
-            self.rect.move_ip(0, 5)
-            if(self.rect.bottom >= 260):
-                self.move_down = False
-                self.move_side = True
+            if self.move_down:
+                self.rect.move_ip(0, 5)
+                if(self.rect.bottom >= 260):
+                    self.move_down = False
+                    self.move_side = True
 
-        if self.posicoes_livres[0]:
+            if self.posicoes_livres[0]:
+                if self.move_side:
+                    self.rect.move_ip(5, 0)
+                    self.image = pygame.transform.flip(self.andando_esquerda_image, True, False)
+                    if(self.rect.right > 650):
+                        self.image
+                        self.move_side = False
+                        self.posicoes_livres[0] = False
+                
+            elif self.posicoes_livres[1]:
+                if self.move_side:
+                    self.rect.move_ip(-5, 0)
+                    self.image = self.andando_esquerda_image
+                    if(self.rect.right < 210):
+                        self.move_side = False
+                        self.posicoes_livres[1] = False
+                        self.move_down = True
+
+    
+    def ir_embora(self, move_down):
+        #ele sai mas esta a haver problemas com o movimento
+        if  move_down:
+            self.rect.move_ip(0, 5)
+            if self.rect.bottom >= 450: 
+                move_down = False
+                self.move_side = True
+                print("AQUI")
+
+        if  not self.posicoes_livres[0]:
+            print("hey")
             if self.move_side:
                 self.rect.move_ip(5, 0)
                 self.image = pygame.transform.flip(self.andando_esquerda_image, True, False)
-                if(self.rect.right > 650):
-                    self.image
+                if self.rect.right >= 800:
+                    print("ENTREI AQUI")
                     self.move_side = False
-                    self.posicoes_livres[0] = False
+                    self.posicoes_livres[0] = True
 
-        elif self.posicoes_livres[1]:
+        if not self.posicoes_livres[1]:
+            print("ENTREI")
             if self.move_side:
                 self.rect.move_ip(-5, 0)
                 self.image = self.andando_esquerda_image
-                if(self.rect.right < 210):
+                if self.rect.right <= 210:
                     self.move_side = False
-                    self.posicoes_livres[1] = False
-            
-            
-        #print(f"Nova posição: ({self.rect.x}, {self.rect.y}), Bottom: {self.rect.bottom}, Right: {self.rect.right}")  
-        
+                    self.posicoes_livres[1] = True
 
 # Criando uma instância da classe Servente
 servente = Servente()
 Balcao = Balcao(game_canvas)
-timer = Timer(60)
+timer = Timer(50)
 destino1 = pygame.Rect(350, 23, 100, 110)
 destino2 = pygame.Rect(360, 23, 100, 110)
 Cliente1 = Cliente(game_canvas, 'croxo.png', destino1)
 Cliente2 = Cliente(game_canvas, 'cazul.png', destino2)
-start_time = pygame.time.get_ticks()
+start_time=pygame.time.get_ticks()
 running = True
 while running:
     for event in pygame.event.get():
@@ -228,10 +253,15 @@ while running:
     if (pygame.time.get_ticks() - start_time) >= 2000:
         Cliente1.aparicao()
         game_canvas.blit(Cliente1.image, Cliente1.rect)
-        if (pygame.time.get_ticks() - start_time) >= 4000:
-            Cliente2.aparicao()
-            game_canvas.blit(Cliente2.image, Cliente2.rect)
+
+
+    if (pygame.time.get_ticks() - start_time) >= 4000:
+        Cliente2.aparicao()
+        game_canvas.blit(Cliente2.image, Cliente2.rect)
     
+    if (pygame.time.get_ticks() - start_time) >= 6000:
+        Cliente1.ir_embora(True)
+        game_canvas.blit(Cliente1.image, Cliente1.rect)    
 
     #desenha o tempo na tela
     game_canvas.blit(timer.text, (750, 50))

@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
-
+import sys
+import time
 # Inicializando o pygame
 pygame.init()
 
@@ -8,6 +9,7 @@ pygame.init()
 GAME_LOGIC_SIZE, SCREEN_SIZE = (800, 600), (1280 , 720 ) # A resolução do jogo
 game_canvas = pygame.Surface(GAME_LOGIC_SIZE) # superfície onde o jogo será desenhado
 screen = pygame.display.set_mode(SCREEN_SIZE) # A tela do usuário
+
 
 class Timer():
     def __init__(self, counter):
@@ -25,8 +27,11 @@ class Timer():
     
     # Atualiza o contador e recria o texto
     def update(self):
-        self.counter += 1
-        self.text = self.font.render(str(self.counter), True, (0, 128, 0))
+        if self.counter > 0:
+            self.counter -= 1
+            self.text = self.font.render(str(self.counter), True, (0, 128, 0))
+        if self.counter == 0:
+            self.counter = 0
 
 class Balcao():
     def __init__(self, design_surface):
@@ -58,10 +63,7 @@ class Balcao():
         altura_mesa = 130
         # Desenhando cada mesa na tela
         posicoes = [(self.game_canvas.get_width()- self.game_canvas.get_height()-altura_mesa, Balcao.desenha_passadeira()+20), # Posição da primeira mesa
-                (self.game_canvas.get_width() - largura_mesa - altura_mesa, Balcao.desenha_passadeira()+20), # Posição da última mesa
-                (self.game_canvas.get_width() / 2 - largura_mesa / 2, self.game_canvas.get_height() / 2), # Posição da mesa do meio
-                (self.game_canvas.get_width()- self.game_canvas.get_height()-altura_mesa, self.game_canvas.get_height() - altura_mesa - self.nova_altura-20), # Posição da mesa mais abaixo
-                (self.game_canvas.get_width() - largura_mesa - altura_mesa, self.game_canvas.get_height() - altura_mesa - self.nova_altura-20)]# Posição da mesa mais abaixo e mais à direita
+                (self.game_canvas.get_width() - largura_mesa - altura_mesa, Balcao.desenha_passadeira()+20)] # Posição da última mesa
         for pos in posicoes:
             # Redimensionando a imagem da mesa para a largura e altura desejadas
             mesa_redimensionada = pygame.transform.scale(mesa_imagem, (largura_mesa, altura_mesa))
@@ -107,19 +109,17 @@ class Servente():
             if pressed_keys[K_RIGHT] and self.rect.right < GAME_LOGIC_SIZE[0]:
                 self.rect.move_ip(5, 0)
                 self.image = pygame.transform.flip(self.image, True, False)
-                
-
         else:
             self.image=self.parado_image
 
 class Cliente():
+    posicoes_livres = [True, True]
     def __init__(self, game_canvas,sprite, destino):
         super().__init__()
         # Carregando a imagem do yoshi roxo
         self.original_image = pygame.image.load(sprite)
         self.andando_pe_image = self.original_image.subsurface((77, 11, 56, 112))
         self.parado_pe_image = self.original_image.subsurface((12, 8, 56, 112))
-        self.parado_sentado_image = self.original_image.subsurface((8, 138, 56, 112))
         self.andando_esquerda_image = self.original_image.subsurface((111, 138, 56, 112))
 
         # Aumentando o tamanho da imagem do cliente
@@ -127,9 +127,7 @@ class Cliente():
         nova_altura = self.original_image.get_height() / 4   # Duplicando a altura
         self.parado_pe_image = pygame.transform.scale(self.parado_pe_image, (nova_largura, nova_altura))
         self.andando_pe_image = pygame.transform.scale(self.andando_pe_image, (nova_largura, nova_altura))
-        self.parado_sentado_image = pygame.transform.scale(self.parado_sentado_image, (nova_largura, nova_altura))
         self.andando_esquerda_image = pygame.transform.scale(self.andando_esquerda_image, (nova_largura, nova_altura))
-
         # Define a imagem inicial
         self.image = self.andando_pe_image
 
@@ -146,51 +144,88 @@ class Cliente():
         self.destino=destino
 
         # Definindo se o servente está se movendo
-        self.is_moving = False
+        self.is_moving = True
+
+        self.pos_final = [(300, 200), (400, 400)]
+        self.posicao_atual = 0
+        self.move_down = True
+        self.move_side = False
+
     def aparicao(self):
-        # Calcula a diferença na coordenada y entre o centro do sprite e o centro do destino
         dy = self.destino.centery - self.rect.centery
-        # Se o sprite não está suficientemente perto do destino (a distância é maior que 2)
-        if abs(dy) > 2:  # Usamos abs() para obter o valor absoluto de dy, pois ele pode ser negativo
-            self.is_moving = True
-            # Muda a imagem do sprite para a imagem de andar
+        if abs(dy) > 2 and self.is_moving:
             self.image = self.andando_pe_image
-
-            # Normaliza dy dividindo-o pelo valor absoluto de dy. Isso resulta em um valor de -1 ou 1, indicando a direção do movimento.
             dy /= abs(dy)
-
-            # Move o sprite na direção do destino. O número 5 é a velocidade do movimento.
             self.rect.y += dy * 5
         else:
-            # Se o sprite está suficientemente perto do destino, define que o sprite não está se movendo
             self.is_moving = False
-            # Muda a imagem do sprite para a imagem de parado
             self.image = self.parado_pe_image
-    def caso_dois_clientes(Cliente1, Cliente2, novo_destino1, novo_destino2):
-        # Atualiza o destino dos clientes para os novos destinos
-        Cliente1.destino = novo_destino1
-        Cliente2.destino = novo_destino2
-        # Calcula o centro dos novos destinos
-        centro_destino1 = Cliente1.destino.x + Cliente1.destino.width / 2
-        centro_destino2 = Cliente2.destino.x + Cliente2.destino.width / 2
-        # Atualiza a posição x dos clientes para ser o centro do destino menos metade da largura do cliente
-        Cliente1.rect.x = centro_destino1 - Cliente1.largura / 2
-        Cliente2.rect.x = centro_destino2 - Cliente2.largura / 2
-        # Desenha a imagem do Cliente2 na tela
-        game_canvas.blit(Cliente2.image, Cliente2.rect)
-        game_canvas.blit(Cliente1.image, Cliente1.rect)
+            if not self.is_moving and self.pos_final:
+                self.ir_mesa()
 
+    def ir_mesa(self):
+            if self.move_down:
+                self.rect.move_ip(0, 5)
+                if(self.rect.bottom >= 260):
+                    self.move_down = False
+                    self.move_side = True
 
+            if self.posicoes_livres[0]:
+                if self.move_side:
+                    self.rect.move_ip(5, 0)
+                    self.image = pygame.transform.flip(self.andando_esquerda_image, True, False)
+                    if(self.rect.right > 650):
+                        self.image
+                        self.move_side = False
+                        self.posicoes_livres[0] = False
+                
+            elif self.posicoes_livres[1]:
+                if self.move_side:
+                    self.rect.move_ip(-5, 0)
+                    self.image = self.andando_esquerda_image
+                    if(self.rect.right < 210):
+                        self.move_side = False
+                        self.posicoes_livres[1] = False
+                        self.move_down = True
+
+    
+    def ir_embora(self, move_down):
+        #ele sai mas esta a haver problemas com o movimento
+        if  move_down:
+            self.rect.move_ip(0, 5)
+            if self.rect.bottom >= 450: 
+                move_down = False
+                self.move_side = True
+                print("AQUI")
+
+        if  not self.posicoes_livres[0]:
+            print("hey")
+            if self.move_side:
+                self.rect.move_ip(5, 0)
+                self.image = pygame.transform.flip(self.andando_esquerda_image, True, False)
+                if self.rect.right >= 800:
+                    print("ENTREI AQUI")
+                    self.move_side = False
+                    self.posicoes_livres[0] = True
+
+        if not self.posicoes_livres[1]:
+            print("ENTREI")
+            if self.move_side:
+                self.rect.move_ip(-5, 0)
+                self.image = self.andando_esquerda_image
+                if self.rect.right <= 210:
+                    self.move_side = False
+                    self.posicoes_livres[1] = True
 
 # Criando uma instância da classe Servente
 servente = Servente()
 Balcao = Balcao(game_canvas)
-timer = Timer(0)
+timer = Timer(50)
 destino1 = pygame.Rect(350, 23, 100, 110)
 destino2 = pygame.Rect(360, 23, 100, 110)
 Cliente1 = Cliente(game_canvas, 'croxo.png', destino1)
 Cliente2 = Cliente(game_canvas, 'cazul.png', destino2)
-
+start_time=pygame.time.get_ticks()
 running = True
 while running:
     for event in pygame.event.get():
@@ -214,17 +249,19 @@ while running:
     Balcao.posicao_mesa()
     # Desenha o servente na tela
     game_canvas.blit(servente.image, servente.rect)
-    # Desenha o cliente na tela
-    if timer.counter >= 2:
+    
+    if (pygame.time.get_ticks() - start_time) >= 2000:
         Cliente1.aparicao()
         game_canvas.blit(Cliente1.image, Cliente1.rect)
-        if timer.counter >= 4:
-            Cliente2.aparicao()
-            game_canvas.blit(Cliente2.image, Cliente2.rect)
-            if timer.counter >= 6:
-                novo_destino1 = pygame.Rect(325, 23, 100, 110)
-                novo_destino2 = pygame.Rect(380, 25, 100, 110)
-                Cliente.caso_dois_clientes(Cliente1, Cliente2, novo_destino1, novo_destino2)
+
+
+    if (pygame.time.get_ticks() - start_time) >= 4000:
+        Cliente2.aparicao()
+        game_canvas.blit(Cliente2.image, Cliente2.rect)
+    
+    if (pygame.time.get_ticks() - start_time) >= 6000:
+        Cliente1.ir_embora(True)
+        game_canvas.blit(Cliente1.image, Cliente1.rect)    
 
     #desenha o tempo na tela
     game_canvas.blit(timer.text, (750, 50))
